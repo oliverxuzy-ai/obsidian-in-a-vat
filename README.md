@@ -10,8 +10,6 @@ Personal knowledge vault MCP server for Claude Desktop. Provides tools to captur
 ## Setup
 
 ```bash
-cd vault-mcp
-
 # Create virtual environment and install
 uv venv && source .venv/bin/activate
 uv pip install -e .
@@ -25,7 +23,8 @@ Copy `.env.example` to `.env` and set your vault path:
 
 ```bash
 cp .env.example .env
-# Edit .env and set VAULT_LOCAL_PATH to your vault directory
+# Edit .env — default points to ./example_vault for development
+# For production, set VAULT_LOCAL_PATH to your own vault directory
 ```
 
 ## Claude Desktop Configuration
@@ -55,7 +54,7 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   "mcpServers": {
     "vault": {
       "command": "uv",
-      "args": ["--directory", "/absolute/path/to/vault-mcp", "run", "python", "-m", "vault_mcp"],
+      "args": ["--directory", "/absolute/path/to/obsidian-in-a-vat", "run", "python", "-m", "vault_mcp"],
       "env": {
         "VAULT_LOCAL_PATH": "/Users/yourname/path/to/second-brain"
       }
@@ -63,6 +62,16 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
   }
 }
 ```
+
+## Example Vault
+
+`example_vault/` 是一个参考 vault 架构模板，展示了目录结构和模板格式。创建你自己的 vault 时可以复制它作为起点：
+
+```bash
+cp -r example_vault /path/to/my-vault
+```
+
+详见 [`example_vault/README.md`](example_vault/README.md)。
 
 ## Tools
 
