@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vault-mcp"
+version = "0.1.0"
+description = "Personal knowledge vault MCP server for Claude Desktop"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]",
+    "python-frontmatter",
+    "pydantic>=2.0",
+    "python-dotenv",
+    "pyyaml",
+]
+
+[project.scripts]
+vault-mcp = "vault_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vault_mcp"]
