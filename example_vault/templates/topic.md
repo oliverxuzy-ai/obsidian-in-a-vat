@@ -13,7 +13,7 @@ seed_notes: []
 
 ## Core Idea
 
-这个主题聚焦的核心问题是什么？
+What is the core question this topic focuses on?
 
 ## Key Notes
 

@@ -65,13 +65,13 @@ Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_
 
 ## Example Vault
 
-`example_vault/` 是一个参考 vault 架构模板，展示了目录结构和模板格式。创建你自己的 vault 时可以复制它作为起点：
+`example_vault/` is a reference vault architecture template showing the directory structure and template formats. Copy it as a starting point when creating your own vault:
 
 ```bash
 cp -r example_vault /path/to/my-vault
 ```
 
-详见 [`example_vault/README.md`](example_vault/README.md)。
+See [`example_vault/README.md`](example_vault/README.md) for details.
 
 ## Tools
 

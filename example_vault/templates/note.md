@@ -12,7 +12,7 @@ promoted_from: []
 
 # Summary
 
-一句话总结这条笔记的核心观点。
+One-sentence summary of the core idea of this note.
 
 # Notes
 
