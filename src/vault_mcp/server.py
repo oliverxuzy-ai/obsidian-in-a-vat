@@ -9,7 +9,9 @@ from vault_mcp.adapters.local import LocalStorageAdapter
 from vault_mcp.tools.read import register_read_tools
 from vault_mcp.tools.write import register_write_tools
 
-load_dotenv()
+# Skip .env loading in Docker (env vars are passed via docker run -e / Dockerfile ENV)
+if not os.environ.get("VAULT_DISABLE_DOTENV"):
+    load_dotenv()
 
 # All logging goes to stderr — stdout is reserved for JSON-RPC (stdio transport)
 logging.basicConfig(

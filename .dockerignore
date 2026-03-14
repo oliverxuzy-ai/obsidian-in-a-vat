@@ -1,0 +1,11 @@
+.git/
+.venv/
+.env
+.DS_Store
+.claude/
+__pycache__/
+*.egg-info/
+*.pyc
+example_vault/
+dist/
+build/

@@ -8,78 +8,71 @@
 
 ## English
 
-Personal knowledge vault MCP server for Claude Desktop. Provides tools to capture thoughts, search notes, and read files from a local markdown-based knowledge vault.
+Personal knowledge vault MCP server for Claude Desktop. Capture thoughts, search notes, and read files from a local markdown-based knowledge vault.
 
-### Prerequisites
+---
 
-- Python 3.10+
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
+### Quick Start (Docker — Recommended)
 
-### Setup
+**Step 1.** Make sure [Docker Desktop](https://www.docker.com/products/docker-desktop/) is running.
+
+**Step 2.** Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+
+```json
+{
+  "mcpServers": {
+    "vault": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "/Users/yourname/my-vault:/vault",
+        "ghcr.io/oliverxuzy-ai/obsidian-in-a-vat:latest"
+      ]
+    }
+  }
+}
+```
+
+Replace `/Users/yourname/my-vault` with the absolute path to your local vault directory.
+
+**Step 3.** Fully quit and reopen Claude Desktop. The `vault` tools will appear automatically.
+
+> **Don't have a vault yet?** Copy the included template:
+> ```bash
+> cp -r example_vault /Users/yourname/my-vault
+> ```
+
+---
+
+### Alternative Setup (Python / uv)
+
+If you prefer not to use Docker:
 
 ```bash
-# Create virtual environment and install
+# Install
 uv venv && source .venv/bin/activate
 uv pip install -e .
-
-# Or with pip
-python -m venv .venv && source .venv/bin/activate
-pip install -e .
 ```
 
-Copy `.env.example` to `.env` and set your vault path:
-
-```bash
-cp .env.example .env
-# Edit .env — default points to ./example_vault for development
-# For production, set VAULT_LOCAL_PATH to your own vault directory
-```
-
-### Claude Desktop Configuration
-
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
-
-**Using python directly:**
+Claude Desktop config:
 
 ```json
 {
   "mcpServers": {
     "vault": {
-      "command": "python",
+      "command": "/absolute/path/to/.venv/bin/python",
       "args": ["-m", "vault_mcp"],
       "env": {
-        "VAULT_LOCAL_PATH": "/Users/yourname/path/to/second-brain"
+        "VAULT_LOCAL_PATH": "/Users/yourname/my-vault"
       }
     }
   }
 }
 ```
 
-**Using uv (recommended):**
+> Use the absolute path to the venv's python — Claude Desktop does not inherit your shell PATH.
 
-```json
-{
-  "mcpServers": {
-    "vault": {
-      "command": "uv",
-      "args": ["--directory", "/absolute/path/to/obsidian-in-a-vat", "run", "python", "-m", "vault_mcp"],
-      "env": {
-        "VAULT_LOCAL_PATH": "/Users/yourname/path/to/second-brain"
-      }
-    }
-  }
-}
-```
-
-### Example Vault
-
-`example_vault/` is a reference vault architecture template showing the directory structure and template formats. Copy it as a starting point when creating your own vault:
-
-```bash
-cp -r example_vault /path/to/my-vault
-```
-
-See [`example_vault/README.md`](example_vault/README.md) for details.
+---
 
 ### Tools
 
@@ -110,15 +103,17 @@ Read the full content of a vault note.
 
 Returns the complete markdown content including frontmatter.
 
+---
+
 ### Auto-Tag Extraction
 
 Tags are extracted from capture text using three sources (in priority order):
 
-1. **tags.yaml** — If a `tags.yaml` file exists at the vault root, custom tags and synonym mappings are used
-2. **Existing notes** — Tags from existing vault files' frontmatter are collected and matched
-3. **Default domains** — Fallback list: ai, llm, productivity, writing, coding, design, business, learning, health, finance, philosophy, psychology
+1. **tags.yaml** — Custom tags and synonym mappings at the vault root
+2. **Existing notes** — Tags collected from existing vault files' frontmatter
+3. **Default domains** — Fallback: ai, llm, productivity, writing, coding, design, business, learning, health, finance, philosophy, psychology
 
-Example `tags.yaml`:
+Example `tags.yaml` in your vault root:
 
 ```yaml
 tags:
@@ -127,16 +122,21 @@ tags:
   design: [UX, UI, user experience]
 ```
 
-### Verification
-
-```bash
-python -m py_compile src/vault_mcp/server.py
-```
+---
 
 ### Development
 
 ```bash
-# Test with MCP Inspector
+# Build image locally
+docker build -t vault-mcp .
+
+# Test the container starts (Ctrl+C to stop)
+echo '{}' | docker run -i --rm -v $(pwd)/example_vault:/vault vault-mcp
+
+# Syntax check
+python -m py_compile src/vault_mcp/server.py
+
+# Interactive MCP Inspector
 mcp dev src/vault_mcp/server.py
 ```
 
@@ -146,78 +146,71 @@ mcp dev src/vault_mcp/server.py
 
 ## 中文
 
-个人知识库 MCP 服务器，适配 Claude Desktop。提供工具来捕获想法、搜索笔记、读取本地 markdown 知识库中的文件。
+个人知识库 MCP 服务器，适配 Claude Desktop。捕获想法、搜索笔记、读取本地 markdown 知识库中的文件。
 
-### 前置要求
+---
 
-- Python 3.10+
-- [uv](https://docs.astral.sh/uv/)（推荐）或 pip
+### 快速开始（Docker — 推荐）
 
-### 安装
+**第一步.** 确保 [Docker Desktop](https://www.docker.com/products/docker-desktop/) 正在运行。
+
+**第二步.** 添加到 Claude Desktop 配置文件（`~/Library/Application Support/Claude/claude_desktop_config.json`）：
+
+```json
+{
+  "mcpServers": {
+    "vault": {
+      "command": "docker",
+      "args": [
+        "run", "-i", "--rm",
+        "-v", "/Users/yourname/my-vault:/vault",
+        "ghcr.io/oliverxuzy-ai/obsidian-in-a-vat:latest"
+      ]
+    }
+  }
+}
+```
+
+将 `/Users/yourname/my-vault` 替换为你本地 vault 目录的绝对路径。
+
+**第三步.** 完全退出并重新打开 Claude Desktop，`vault` 工具会自动出现。
+
+> **还没有 vault？** 复制内置模板：
+> ```bash
+> cp -r example_vault /Users/yourname/my-vault
+> ```
+
+---
+
+### 备选安装方式（Python / uv）
+
+如果不想使用 Docker：
 
 ```bash
-# 创建虚拟环境并安装
+# 安装
 uv venv && source .venv/bin/activate
 uv pip install -e .
-
-# 或使用 pip
-python -m venv .venv && source .venv/bin/activate
-pip install -e .
 ```
 
-将 `.env.example` 复制为 `.env` 并设置你的 vault 路径：
-
-```bash
-cp .env.example .env
-# 编辑 .env — 默认指向 ./example_vault，方便开发测试
-# 生产环境请将 VAULT_LOCAL_PATH 设为你自己的 vault 目录
-```
-
-### Claude Desktop 配置
-
-添加到你的 Claude Desktop 配置文件（`~/Library/Application Support/Claude/claude_desktop_config.json`）：
-
-**直接使用 python：**
+Claude Desktop 配置：
 
 ```json
 {
   "mcpServers": {
     "vault": {
-      "command": "python",
+      "command": "/绝对路径/.venv/bin/python",
       "args": ["-m", "vault_mcp"],
       "env": {
-        "VAULT_LOCAL_PATH": "/Users/yourname/path/to/second-brain"
+        "VAULT_LOCAL_PATH": "/Users/yourname/my-vault"
       }
     }
   }
 }
 ```
 
-**使用 uv（推荐）：**
+> 必须使用 venv 内 python 的绝对路径 — Claude Desktop 不继承你的 shell PATH。
 
-```json
-{
-  "mcpServers": {
-    "vault": {
-      "command": "uv",
-      "args": ["--directory", "/absolute/path/to/obsidian-in-a-vat", "run", "python", "-m", "vault_mcp"],
-      "env": {
-        "VAULT_LOCAL_PATH": "/Users/yourname/path/to/second-brain"
-      }
-    }
-  }
-}
-```
-
-### 示例 Vault
-
-`example_vault/` 是参考 vault 架构模板，展示目录结构和模板格式。创建你自己的 vault 时可以复制它作为起点：
-
-```bash
-cp -r example_vault /path/to/my-vault
-```
-
-详见 [`example_vault/README.md`](example_vault/README.md)。
+---
 
 ### 工具
 
@@ -248,15 +241,17 @@ cp -r example_vault /path/to/my-vault
 
 返回完整的 markdown 内容（含 frontmatter）。
 
+---
+
 ### 自动标签提取
 
 标签从 capture 文本中提取，使用三个来源（按优先级排序）：
 
-1. **tags.yaml** — 若 vault 根目录存在 `tags.yaml`，使用自定义标签和同义词映射
+1. **tags.yaml** — vault 根目录的自定义标签和同义词映射
 2. **已有笔记** — 收集已有 vault 文件 frontmatter 中的标签进行匹配
 3. **默认领域** — 兜底列表：ai, llm, productivity, writing, coding, design, business, learning, health, finance, philosophy, psychology
 
-`tags.yaml` 示例：
+`tags.yaml` 示例（放在 vault 根目录）：
 
 ```yaml
 tags:
@@ -265,15 +260,20 @@ tags:
   design: [UX, UI, user experience]
 ```
 
-### 验证
-
-```bash
-python -m py_compile src/vault_mcp/server.py
-```
+---
 
 ### 开发
 
 ```bash
-# 使用 MCP Inspector 测试
+# 本地构建镜像
+docker build -t vault-mcp .
+
+# 测试容器启动（Ctrl+C 停止）
+echo '{}' | docker run -i --rm -v $(pwd)/example_vault:/vault vault-mcp
+
+# 语法检查
+python -m py_compile src/vault_mcp/server.py
+
+# 使用 MCP Inspector 交互测试
 mcp dev src/vault_mcp/server.py
 ```

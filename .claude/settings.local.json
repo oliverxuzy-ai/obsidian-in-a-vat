@@ -6,7 +6,14 @@
       "Bash(pip3 show:*)",
       "Bash(python3 -c \"import mcp; print\\(mcp.__file__\\)\")",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:gofastmcp.com)"
+      "WebFetch(domain:gofastmcp.com)",
+      "Bash(mv vault-mcp/src .)",
+      "Bash(mv vault-mcp/pyproject.toml .)",
+      "Bash(mv vault-mcp/.env.example .)",
+      "Bash(mv vault-mcp/README.md .)",
+      "Bash(python -m py_compile src/vault_mcp/server.py)",
+      "Bash(docker build:*)",
+      "Bash(git add:*)"
     ]
   }
 }
