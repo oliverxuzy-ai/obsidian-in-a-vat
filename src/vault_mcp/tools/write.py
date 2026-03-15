@@ -23,15 +23,6 @@ def _generate_slug(thought: str) -> str:
     return "-".join(words) if words else "untitled"
 
 
-def _generate_title(thought: str) -> str:
-    """Generate a title from the first ~8 words of the thought."""
-    words = thought.split()[:8]
-    title = " ".join(words)
-    if len(thought.split()) > 8:
-        title += "..."
-    return title
-
-
 def _load_tags_yaml(adapter: StorageAdapter) -> dict[str, list[str]]:
     """Load tags.yaml from vault root if it exists.
 
@@ -119,53 +110,91 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
     tags_yaml = _load_tags_yaml(adapter)
     existing_tags = _collect_existing_tags(adapter)
 
+    VALID_SOURCE_TYPES = {"conversation", "article", "flash"}
+
     @mcp.tool(
         annotations={"destructiveHint": False, "idempotentHint": False}
     )
     def vault_capture(
-        thought: str,
+        title: str,
+        insight: str,
+        source_type: str = "conversation",
+        original: str | None = None,
         tags: list[str] | None = None,
     ) -> dict:
-        """Capture a thought or insight into the vault.
+        """Capture a refined insight into the vault.
+
+        WORKFLOW — Claude MUST follow these steps before calling this tool:
+        1. REFINE: Distill the user's thought into a core insight (1–3 plain-text
+           sentences). Generate a clean, descriptive plain-text title (≤50 chars).
+        2. CONFIRM: Present the refinement to the user and wait for approval.
+           Refinement is lossy — only the user knows which version captures
+           what they truly want to remember. Do NOT call this tool until the
+           user explicitly confirms.
+        3. STORE: Call this tool with the confirmed title, insight, and metadata.
 
         Args:
-            thought: The content/thought to capture
-            tags: Optional list of tags to categorize the capture
+            title: Plain-text title (≤50 characters). Used for filename and
+                frontmatter. Example: "Spaced repetition and desirable difficulty"
+            insight: Core insight in 1–3 sentences, plain text. The refined,
+                confirmed version of what the user wants to remember.
+            source_type: Origin of the thought — "conversation", "article", or
+                "flash". Defaults to "conversation".
+            original: Optional verbatim original material for reference. Include
+                when the user wants to preserve the source text alongside the
+                refined insight.
+            tags: Optional list of tags. If omitted, tags are auto-extracted
+                from the insight text.
         """
         nonlocal existing_tags
 
+        # Validate source_type
+        if source_type not in VALID_SOURCE_TYPES:
+            return {
+                "status": "error",
+                "message": f"Invalid source_type '{source_type}'. "
+                f"Must be one of: {', '.join(sorted(VALID_SOURCE_TYPES))}",
+            }
+
+        # Truncate title if over 50 characters
+        if len(title) > 50:
+            logger.warning("Title truncated from %d to 50 characters", len(title))
+            title = title[:50]
+
         user_tags = tags or []
         now = datetime.now(timezone.utc)
-        slug = _generate_slug(thought)
-        title = _generate_title(thought)
+        slug = _generate_slug(title)
         timestamp_str = now.strftime("%Y-%m-%d-%H%M%S")
         filename = f"captures/{timestamp_str}-{slug}.md"
 
         # Refresh existing tags on each capture
         existing_tags = _collect_existing_tags(adapter)
 
-        auto_tags = _extract_auto_tags(thought, tags_yaml, existing_tags)
+        auto_tags = _extract_auto_tags(insight, tags_yaml, existing_tags)
         all_tags = sorted(set(user_tags + auto_tags))
 
-        # Build content following templates/capture.md format
+        # Build content: insight + optional parts separated by ---
         iso_now = now.isoformat()
         metadata = {
             "title": title,
             "status": "capture",
             "created": iso_now,
             "updated": iso_now,
-            "source": "claude-chat",
+            "source": source_type,
             "tags": all_tags,
             "aliases": [],
         }
 
-        body = (
-            f"## Capture\n\n"
-            f"{thought}\n\n"
-            f"## Next\n\n"
-            f"- Why does this matter?\n"
-            f"- What should this connect to later?"
-        )
+        body = insight
+
+        optional_parts = []
+        if source_type != "conversation":
+            optional_parts.append(f"Source: {source_type}")
+        if original:
+            optional_parts.append(f"Original:\n{original}")
+
+        if optional_parts:
+            body += "\n\n---\n\n" + "\n\n".join(optional_parts)
 
         post = frontmatter.Post(body, **metadata)
         content = frontmatter.dumps(post)
