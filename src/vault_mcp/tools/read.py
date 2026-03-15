@@ -7,11 +7,7 @@ from vault_mcp.adapters.base import StorageAdapter
 logger = logging.getLogger("vault-mcp.tools.read")
 
 
-def _handle_search(adapter: StorageAdapter, **kwargs) -> list[dict]:
-    query: str = kwargs.get("query", "")
-    directory: str = kwargs.get("directory", "")
-    tags: list[str] | None = kwargs.get("tags")
-
+def _handle_search(adapter: StorageAdapter, query, directory, tags) -> list[dict]:
     filter_tags = tags or []
     results = adapter.search_files(query, directory)
 
@@ -49,16 +45,11 @@ def _handle_search(adapter: StorageAdapter, **kwargs) -> list[dict]:
     return output
 
 
-def _handle_get(adapter: StorageAdapter, **kwargs) -> str:
-    path: str = kwargs.get("path", "")
+def _handle_get(adapter: StorageAdapter, path) -> str:
     return adapter.read_file(path)
 
 
-def _handle_list_captures(adapter: StorageAdapter, **kwargs) -> list[dict]:
-    status: str = kwargs.get("status", "capture")
-    limit: int = kwargs.get("limit", 50)
-    include_content: bool = kwargs.get("include_content", False)
-
+def _handle_list_captures(adapter: StorageAdapter, status, limit, include_content) -> list[dict]:
     try:
         files = adapter.list_files("captures")
     except Exception as e:
@@ -66,9 +57,9 @@ def _handle_list_captures(adapter: StorageAdapter, **kwargs) -> list[dict]:
         return []
 
     captures: list[dict] = []
-    for path in files:
+    for file_path in files:
         try:
-            content = adapter.read_file(path)
+            content = adapter.read_file(file_path)
             post = frontmatter.loads(content)
             file_status = post.metadata.get("status", "capture")
 
@@ -76,7 +67,7 @@ def _handle_list_captures(adapter: StorageAdapter, **kwargs) -> list[dict]:
                 continue
 
             entry: dict = {
-                "path": path,
+                "path": file_path,
                 "title": post.metadata.get("title", ""),
                 "status": file_status,
                 "created": post.metadata.get("created", ""),
@@ -98,24 +89,33 @@ def _handle_list_captures(adapter: StorageAdapter, **kwargs) -> list[dict]:
 def register_read_tools(mcp, adapter: StorageAdapter) -> None:
 
     @mcp.tool(annotations={"readOnlyHint": True})
-    def vault_read(action: str, **kwargs) -> list[dict] | str:
+    def vault_read(
+        action: str,
+        query: str = "",
+        directory: str = "",
+        tags: list[str] | None = None,
+        path: str = "",
+        status: str = "capture",
+        limit: int = 50,
+        include_content: bool = False,
+    ) -> list[dict] | str:
         """Read and search vault content.
 
         Actions:
           search: Search vault notes.
-            kwargs: query (str), directory (str, default ""), tags (list[str] | None)
+            params: query, directory, tags
           get: Read a single file's full content.
-            kwargs: path (str)
+            params: path
           list_captures: List captures filtered by status, sorted newest first.
-            kwargs: status (str, default "capture" — also "promoted" or "all"),
-                    limit (int, default 50),
-                    include_content (bool, default False)
+            params: status ("capture" | "promoted" | "all"),
+                    limit (default 50),
+                    include_content (default False)
         """
         if action == "search":
-            return _handle_search(adapter, **kwargs)
+            return _handle_search(adapter, query, directory, tags)
         elif action == "get":
-            return _handle_get(adapter, **kwargs)
+            return _handle_get(adapter, path)
         elif action == "list_captures":
-            return _handle_list_captures(adapter, **kwargs)
+            return _handle_list_captures(adapter, status, limit, include_content)
         else:
             return {"status": "error", "message": f"Unknown action '{action}'. Valid: search, get, list_captures"}

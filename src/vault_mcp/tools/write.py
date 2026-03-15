@@ -113,14 +113,12 @@ def _handle_capture_save(
     tags_yaml: dict[str, list[str]],
     existing_tags: set[str],
     valid_source_types: set[str],
-    **kwargs,
+    title: str,
+    insight: str,
+    source_type: str,
+    original: str | None,
+    tags: list[str] | None,
 ) -> dict:
-    title: str = kwargs.get("title", "")
-    insight: str = kwargs.get("insight", "")
-    source_type: str = kwargs.get("source_type", "conversation")
-    original: str | None = kwargs.get("original")
-    tags: list[str] | None = kwargs.get("tags")
-
     # Validate source_type
     if source_type not in valid_source_types:
         return {
@@ -198,18 +196,16 @@ def _handle_capture_save(
 def _handle_promote(
     adapter: StorageAdapter,
     title_cache: dict[str, str],
-    **kwargs,
+    capture_paths: list[str],
+    title: str,
+    summary: str,
+    domain: str,
+    content: str,
+    tags: list[str] | None,
+    aliases: list[str] | None,
+    confidence: float,
+    auto_link: bool,
 ) -> dict:
-    capture_paths: list[str] = kwargs.get("capture_paths", [])
-    title: str = kwargs.get("title", "")
-    summary: str = kwargs.get("summary", "")
-    domain: str = kwargs.get("domain", "")
-    content: str = kwargs.get("content", "")
-    tags: list[str] | None = kwargs.get("tags")
-    aliases: list[str] | None = kwargs.get("aliases")
-    confidence: float = kwargs.get("confidence", 0.7)
-    auto_link: bool = kwargs.get("auto_link", True)
-
     logger.info(
         "vault_promote start: title=%r captures=%d auto_link=%s",
         title,
@@ -331,14 +327,21 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
     @mcp.tool(
         annotations={"destructiveHint": False, "idempotentHint": False}
     )
-    def vault_capture(action: str, **kwargs) -> dict:
+    def vault_capture(
+        action: str,
+        title: str = "",
+        insight: str = "",
+        source_type: str = "conversation",
+        original: str | None = None,
+        tags: list[str] | None = None,
+    ) -> dict:
         """Capture a refined insight into the vault.
 
         Actions:
           save: Save a new capture.
-            kwargs: title (str, ≤50 chars), insight (str, 1–3 sentences),
-                    source_type (str, default "conversation" — also "article" or "flash"),
-                    original (str | None), tags (list[str] | None)
+            params: title (str, ≤50 chars), insight (str, 1–3 sentences),
+                    source_type (str, default "conversation" — also "article"
+                    or "flash"), original (str | None), tags (list[str] | None)
 
         WORKFLOW — Claude MUST follow these steps before calling this tool:
         1. REFINE: Distill the user's thought into a core insight (1–3 plain-text
@@ -352,7 +355,8 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
         """
         if action == "save":
             return _handle_capture_save(
-                adapter, tags_yaml, existing_tags, VALID_SOURCE_TYPES, **kwargs
+                adapter, tags_yaml, existing_tags, VALID_SOURCE_TYPES,
+                title, insight, source_type, original, tags,
             )
         else:
             return {"status": "error", "message": f"Unknown action '{action}'. Valid: save"}
@@ -360,12 +364,23 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
     @mcp.tool(
         annotations={"destructiveHint": False, "idempotentHint": False}
     )
-    def vault_promote(action: str, **kwargs) -> dict:
+    def vault_promote(
+        action: str,
+        capture_paths: list[str] | None = None,
+        title: str = "",
+        summary: str = "",
+        domain: str = "",
+        content: str = "",
+        tags: list[str] | None = None,
+        aliases: list[str] | None = None,
+        confidence: float = 0.7,
+        auto_link: bool = True,
+    ) -> dict:
         """Promote one or more captures into a structured note.
 
         Actions:
           promote: Promote captures into a note.
-            kwargs: capture_paths (list[str]), title (str), summary (str),
+            params: capture_paths (list[str]), title (str), summary (str),
                     domain (str), content (str), tags (list[str] | None),
                     aliases (list[str] | None), confidence (float, default 0.7),
                     auto_link (bool, default True)
@@ -381,6 +396,10 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
         4. PROMOTE: Call this tool with action="promote" and the confirmed output.
         """
         if action == "promote":
-            return _handle_promote(adapter, title_cache, **kwargs)
+            return _handle_promote(
+                adapter, title_cache,
+                capture_paths or [], title, summary, domain, content,
+                tags, aliases, confidence, auto_link,
+            )
         else:
             return {"status": "error", "message": f"Unknown action '{action}'. Valid: promote"}
