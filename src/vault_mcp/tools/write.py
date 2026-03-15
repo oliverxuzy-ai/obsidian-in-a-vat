@@ -17,10 +17,13 @@ DEFAULT_DOMAIN_TAGS = [
 ]
 
 
-def _generate_slug(thought: str) -> str:
-    """Generate a URL-friendly slug from the first 5 words."""
-    words = re.findall(r"[a-zA-Z0-9]+", thought.lower())[:5]
-    return "-".join(words) if words else "untitled"
+def _generate_slug(*candidates: str) -> str:
+    """Generate a URL-friendly slug from the first candidate with ASCII words."""
+    for candidate in candidates:
+        words = re.findall(r"[a-zA-Z0-9]+", candidate.lower())[:5]
+        if words:
+            return "-".join(words)
+    return "capture"
 
 
 def _load_tags_yaml(adapter: StorageAdapter) -> dict[str, list[str]]:
@@ -163,7 +166,7 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
 
         user_tags = tags or []
         now = datetime.now(timezone.utc)
-        slug = _generate_slug(title)
+        slug = _generate_slug(title, insight)
         timestamp_str = now.strftime("%Y-%m-%d-%H%M%S")
         filename = f"captures/{timestamp_str}-{slug}.md"
 

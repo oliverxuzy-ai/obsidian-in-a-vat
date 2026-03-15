@@ -13,7 +13,11 @@
       "Bash(mv vault-mcp/README.md .)",
       "Bash(python -m py_compile src/vault_mcp/server.py)",
       "Bash(docker build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)",
+      "Bash(grep -E \"\\\\.\\(ts|js|json|md\\)$\")",
+      "Bash(find /Users/zhengyangxu/Desktop/side_project/obsidian-in-a-vat -maxdepth 3 -not -path */.* -not -path */.venv/* -not -path */__pycache__/* -type d)"
     ]
   }
 }
