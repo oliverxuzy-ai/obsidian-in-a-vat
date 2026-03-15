@@ -7,113 +7,115 @@ from vault_mcp.adapters.base import StorageAdapter
 logger = logging.getLogger("vault-mcp.tools.read")
 
 
-def register_read_tools(mcp, adapter: StorageAdapter) -> None:
+def _handle_search(adapter: StorageAdapter, **kwargs) -> list[dict]:
+    query: str = kwargs.get("query", "")
+    directory: str = kwargs.get("directory", "")
+    tags: list[str] | None = kwargs.get("tags")
 
-    @mcp.tool(annotations={"readOnlyHint": True})
-    def vault_search(
-        query: str,
-        directory: str = "",
-        tags: list[str] | None = None,
-    ) -> list[dict]:
-        """Search the vault for notes matching a query.
+    filter_tags = tags or []
+    results = adapter.search_files(query, directory)
 
-        Args:
-            query: Text to search for in filenames and content
-            directory: Subdirectory to search within (default: entire vault)
-            tags: Optional tags to filter results by
-        """
-        filter_tags = tags or []
-        results = adapter.search_files(query, directory)
-
-        # Filter by frontmatter tags if requested
-        if filter_tags:
-            filtered = []
-            for r in results:
-                try:
-                    content = adapter.read_file(r["path"])
-                    post = frontmatter.loads(content)
-                    file_tags = post.metadata.get("tags", [])
-                    if any(t in file_tags for t in filter_tags):
-                        filtered.append(r)
-                except Exception:
-                    continue
-            results = filtered
-
-        # Build output with frontmatter metadata
-        output = []
+    # Filter by frontmatter tags if requested
+    if filter_tags:
+        filtered = []
         for r in results:
-            entry: dict = {"path": r["path"]}
             try:
                 content = adapter.read_file(r["path"])
                 post = frontmatter.loads(content)
-                entry["title"] = post.metadata.get("title", r.get("filename", ""))
-                entry["status"] = post.metadata.get("status", "")
-                entry["tags"] = post.metadata.get("tags", [])
-                entry["created"] = post.metadata.get("created", "")
-                entry["preview"] = post.content[:200]
-            except Exception:
-                entry["title"] = r.get("filename", "")
-                entry["preview"] = r.get("snippet", "")
-            output.append(entry)
-
-        return output
-
-    @mcp.tool(annotations={"readOnlyHint": True})
-    def vault_read(path: str) -> str:
-        """Read the full content of a vault note.
-
-        Args:
-            path: Relative path to the file within the vault
-        """
-        return adapter.read_file(path)
-
-    @mcp.tool(annotations={"readOnlyHint": True})
-    def vault_list_captures(
-        status: str = "capture",
-        limit: int = 50,
-        include_content: bool = False,
-    ) -> list[dict]:
-        """List captures filtered by status, sorted newest first.
-
-        Args:
-            status: Filter by status — "capture" (unpromoted, default),
-                    "promoted" (already promoted), or "all" (everything)
-            limit: Maximum number of results to return (default 50)
-            include_content: If True, return full file content instead of a
-                200-char preview. Use this for promote workflows to avoid
-                extra vault_read calls.
-        """
-        try:
-            files = adapter.list_files("captures")
-        except Exception as e:
-            logger.warning("Error listing captures: %s", e)
-            return []
-
-        captures: list[dict] = []
-        for path in files:
-            try:
-                content = adapter.read_file(path)
-                post = frontmatter.loads(content)
-                file_status = post.metadata.get("status", "capture")
-
-                if status != "all" and file_status != status:
-                    continue
-
-                entry: dict = {
-                    "path": path,
-                    "title": post.metadata.get("title", ""),
-                    "status": file_status,
-                    "created": post.metadata.get("created", ""),
-                    "tags": post.metadata.get("tags", []),
-                }
-                if include_content:
-                    entry["content"] = content
-                else:
-                    entry["preview"] = post.content[:200]
-                captures.append(entry)
+                file_tags = post.metadata.get("tags", [])
+                if any(t in file_tags for t in filter_tags):
+                    filtered.append(r)
             except Exception:
                 continue
+        results = filtered
 
-        # Sort by filename descending (filenames are timestamped)
-        captures.sort(key=lambda c: c["path"], reverse=True)
-        return captures[:limit]
+    # Build output with frontmatter metadata
+    output = []
+    for r in results:
+        entry: dict = {"path": r["path"]}
+        try:
+            content = adapter.read_file(r["path"])
+            post = frontmatter.loads(content)
+            entry["title"] = post.metadata.get("title", r.get("filename", ""))
+            entry["status"] = post.metadata.get("status", "")
+            entry["tags"] = post.metadata.get("tags", [])
+            entry["created"] = post.metadata.get("created", "")
+            entry["preview"] = post.content[:200]
+        except Exception:
+            entry["title"] = r.get("filename", "")
+            entry["preview"] = r.get("snippet", "")
+        output.append(entry)
+
+    return output
+
+
+def _handle_get(adapter: StorageAdapter, **kwargs) -> str:
+    path: str = kwargs.get("path", "")
+    return adapter.read_file(path)
+
+
+def _handle_list_captures(adapter: StorageAdapter, **kwargs) -> list[dict]:
+    status: str = kwargs.get("status", "capture")
+    limit: int = kwargs.get("limit", 50)
+    include_content: bool = kwargs.get("include_content", False)
+
+    try:
+        files = adapter.list_files("captures")
+    except Exception as e:
+        logger.warning("Error listing captures: %s", e)
+        return []
+
+    captures: list[dict] = []
+    for path in files:
+        try:
+            content = adapter.read_file(path)
+            post = frontmatter.loads(content)
+            file_status = post.metadata.get("status", "capture")
+
+            if status != "all" and file_status != status:
+                continue
+
+            entry: dict = {
+                "path": path,
+                "title": post.metadata.get("title", ""),
+                "status": file_status,
+                "created": post.metadata.get("created", ""),
+                "tags": post.metadata.get("tags", []),
+            }
+            if include_content:
+                entry["content"] = content
+            else:
+                entry["preview"] = post.content[:200]
+            captures.append(entry)
+        except Exception:
+            continue
+
+    # Sort by filename descending (filenames are timestamped)
+    captures.sort(key=lambda c: c["path"], reverse=True)
+    return captures[:limit]
+
+
+def register_read_tools(mcp, adapter: StorageAdapter) -> None:
+
+    @mcp.tool(annotations={"readOnlyHint": True})
+    def vault_read(action: str, **kwargs) -> list[dict] | str:
+        """Read and search vault content.
+
+        Actions:
+          search: Search vault notes.
+            kwargs: query (str), directory (str, default ""), tags (list[str] | None)
+          get: Read a single file's full content.
+            kwargs: path (str)
+          list_captures: List captures filtered by status, sorted newest first.
+            kwargs: status (str, default "capture" — also "promoted" or "all"),
+                    limit (int, default 50),
+                    include_content (bool, default False)
+        """
+        if action == "search":
+            return _handle_search(adapter, **kwargs)
+        elif action == "get":
+            return _handle_get(adapter, **kwargs)
+        elif action == "list_captures":
+            return _handle_list_captures(adapter, **kwargs)
+        else:
+            return {"status": "error", "message": f"Unknown action '{action}'. Valid: search, get, list_captures"}

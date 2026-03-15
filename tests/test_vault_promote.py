@@ -33,6 +33,7 @@ class TestPromoteHappyPath:
         adapter, promote = setup_promote({"captures/2026-01-01-000000-test-insight.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/2026-01-01-000000-test-insight.md"],
             title="Testing Best Practices",
             summary="A summary of testing.",
@@ -53,6 +54,7 @@ class TestPromoteHappyPath:
         adapter, promote = setup_promote({"captures/cap1.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/cap1.md"],
             title="My Note",
             summary="Summary.",
@@ -79,6 +81,7 @@ class TestPromoteHappyPath:
         })
 
         result = promote(
+            action="promote",
             capture_paths=["captures/cap1.md", "captures/cap2.md"],
             title="Combined",
             summary="Both.",
@@ -108,6 +111,7 @@ class TestTagHandling:
         })
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c1.md", "captures/c2.md"],
             title="Merged Tags",
             summary="S.",
@@ -124,6 +128,7 @@ class TestTagHandling:
         adapter, promote = setup_promote({"captures/c.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="Override",
             summary="S.",
@@ -147,6 +152,7 @@ class TestSlugAndCollision:
         adapter, promote = setup_promote({"captures/c.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="My Great Note",
             summary="S.",
@@ -166,6 +172,7 @@ class TestSlugAndCollision:
         })
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="My Note",
             summary="S.",
@@ -186,6 +193,7 @@ class TestSlugAndCollision:
         })
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="My Note",
             summary="S.",
@@ -207,6 +215,7 @@ class TestErrorCases:
         adapter, promote = setup_promote()
 
         result = promote(
+            action="promote",
             capture_paths=["captures/nonexistent.md"],
             title="T",
             summary="S.",
@@ -223,6 +232,7 @@ class TestErrorCases:
         adapter, promote = setup_promote({"captures/c.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="T",
             summary="S.",
@@ -239,6 +249,7 @@ class TestErrorCases:
         adapter, promote = setup_promote({"captures/c1.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c1.md", "captures/c2.md"],
             title="T",
             summary="S.",
@@ -267,6 +278,7 @@ class TestAutoLink:
         })
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="Learning Techniques",
             summary="About spaced repetition and more.",
@@ -288,6 +300,7 @@ class TestAutoLink:
         })
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="Learning",
             summary="About spaced repetition.",
@@ -308,6 +321,7 @@ class TestAutoLink:
         })
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="Testing",
             summary="About testing.",
@@ -331,6 +345,7 @@ class TestMetadata:
         adapter, promote = setup_promote({"captures/c.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="T",
             summary="S.",
@@ -347,6 +362,7 @@ class TestMetadata:
         adapter, promote = setup_promote({"captures/c.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="T",
             summary="S.",
@@ -364,6 +380,7 @@ class TestMetadata:
         adapter, promote = setup_promote({"captures/c.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="T",
             summary="S.",
@@ -381,6 +398,7 @@ class TestMetadata:
         adapter, promote = setup_promote({"captures/c.md": cap})
 
         result = promote(
+            action="promote",
             capture_paths=["captures/c.md"],
             title="T",
             summary="S.",
