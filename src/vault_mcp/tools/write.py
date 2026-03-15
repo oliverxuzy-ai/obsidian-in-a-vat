@@ -248,7 +248,15 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
            - summary (one sentence)
            - domain (knowledge area)
            - content (synthesized markdown combining the captures' insights)
-        3. PROMOTE: Call this tool with the synthesized output. Do NOT call
+           - confidence (0.0–1.0, your honest assessment)
+           - tags (or note that capture tags will be inherited)
+        3. CONFIRM: Present the full synthesis to the user and wait for
+           approval. Show: title, summary, domain, content, confidence, tags,
+           and which captures will be promoted. Promotion is semi-destructive
+           — source captures are marked as promoted and cannot be re-promoted.
+           The user may adjust any field, especially confidence. Do NOT call
+           this tool until the user explicitly confirms.
+        4. PROMOTE: Call this tool with the confirmed output. Do NOT call
            vault_read on individual captures — step 1 already provided full
            content.
 
