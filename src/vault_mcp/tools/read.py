@@ -71,6 +71,7 @@ def register_read_tools(mcp, adapter: StorageAdapter) -> None:
     def vault_list_captures(
         status: str = "capture",
         limit: int = 50,
+        include_content: bool = False,
     ) -> list[dict]:
         """List captures filtered by status, sorted newest first.
 
@@ -78,6 +79,9 @@ def register_read_tools(mcp, adapter: StorageAdapter) -> None:
             status: Filter by status — "capture" (unpromoted, default),
                     "promoted" (already promoted), or "all" (everything)
             limit: Maximum number of results to return (default 50)
+            include_content: If True, return full file content instead of a
+                200-char preview. Use this for promote workflows to avoid
+                extra vault_read calls.
         """
         try:
             files = adapter.list_files("captures")
@@ -95,14 +99,18 @@ def register_read_tools(mcp, adapter: StorageAdapter) -> None:
                 if status != "all" and file_status != status:
                     continue
 
-                captures.append({
+                entry: dict = {
                     "path": path,
                     "title": post.metadata.get("title", ""),
                     "status": file_status,
                     "created": post.metadata.get("created", ""),
                     "tags": post.metadata.get("tags", []),
-                    "preview": post.content[:200],
-                })
+                }
+                if include_content:
+                    entry["content"] = content
+                else:
+                    entry["preview"] = post.content[:200]
+                captures.append(entry)
             except Exception:
                 continue
 

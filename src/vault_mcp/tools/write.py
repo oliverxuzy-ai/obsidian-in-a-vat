@@ -109,9 +109,10 @@ def _extract_auto_tags(
 
 
 def register_write_tools(mcp, adapter: StorageAdapter) -> None:
-    # Pre-load tag sources at registration time
+    # Pre-load tag sources and note titles at registration time
     tags_yaml = _load_tags_yaml(adapter)
     existing_tags = _collect_existing_tags(adapter)
+    title_cache = collect_note_titles(adapter)
 
     VALID_SOURCE_TYPES = {"conversation", "article", "flash"}
 
@@ -149,8 +150,6 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
             tags: Optional list of tags. If omitted, tags are auto-extracted
                 from the insight text.
         """
-        nonlocal existing_tags
-
         # Validate source_type
         if source_type not in VALID_SOURCE_TYPES:
             return {
@@ -169,9 +168,6 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
         slug = _generate_slug(title, insight)
         timestamp_str = now.strftime("%Y-%m-%d-%H%M%S")
         filename = f"captures/{timestamp_str}-{slug}.md"
-
-        # Refresh existing tags on each capture
-        existing_tags = _collect_existing_tags(adapter)
 
         auto_tags = _extract_auto_tags(insight, tags_yaml, existing_tags)
         all_tags = sorted(set(user_tags + auto_tags))
@@ -203,6 +199,9 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
         content = frontmatter.dumps(post)
 
         result = adapter.write_file(filename, content)
+
+        # Incrementally update cached tags
+        existing_tags.update(t.lower() for t in all_tags)
 
         # Find related captures by searching for matching tags
         related: list[str] = []
@@ -240,9 +239,21 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
     ) -> dict:
         """Promote one or more captures into a structured note.
 
-        Claude should read the captures first, synthesize them, then call this
-        tool with structured output. The tool handles file creation, frontmatter,
-        auto-wikilink insertion, and marking source captures as promoted.
+        WORKFLOW — Claude MUST follow these steps:
+        1. LIST: Call vault_list_captures(include_content=True) to get all
+           unpromoted captures with full content in a single call.
+        2. SELECT & SYNTHESIZE: Choose related captures to promote together.
+           Generate:
+           - title (descriptive, ≤60 chars)
+           - summary (one sentence)
+           - domain (knowledge area)
+           - content (synthesized markdown combining the captures' insights)
+        3. PROMOTE: Call this tool with the synthesized output. Do NOT call
+           vault_read on individual captures — step 1 already provided full
+           content.
+
+        The tool handles file creation, frontmatter, auto-wikilink insertion,
+        and marking source captures as promoted.
 
         Args:
             capture_paths: List of capture file paths to promote
@@ -304,9 +315,8 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
         # 5. Auto-insert wikilinks to existing notes
         wikilinks_inserted: list[str] = []
         if auto_link:
-            title_map = collect_note_titles(adapter)
             body, wikilinks_inserted = auto_insert_wikilinks(
-                body, title_map, exclude_titles=[title.lower()]
+                body, title_cache, exclude_titles=[title.lower()]
             )
 
         # 6. Write the note file
@@ -325,6 +335,13 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
         }
         note_post = frontmatter.Post(body, **metadata)
         adapter.write_file(filename, frontmatter.dumps(note_post))
+
+        # Incrementally update title cache for future wikilink insertion
+        title_cache[title.lower()] = title
+        for alias in (aliases or []):
+            alias_str = str(alias)
+            if alias_str:
+                title_cache[alias_str.lower()] = title
 
         # 7. Mark source captures as promoted
         for path, post in capture_posts:
