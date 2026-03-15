@@ -66,3 +66,46 @@ def register_read_tools(mcp, adapter: StorageAdapter) -> None:
             path: Relative path to the file within the vault
         """
         return adapter.read_file(path)
+
+    @mcp.tool(annotations={"readOnlyHint": True})
+    def vault_list_captures(
+        status: str = "capture",
+        limit: int = 50,
+    ) -> list[dict]:
+        """List captures filtered by status, sorted newest first.
+
+        Args:
+            status: Filter by status — "capture" (unpromoted, default),
+                    "promoted" (already promoted), or "all" (everything)
+            limit: Maximum number of results to return (default 50)
+        """
+        try:
+            files = adapter.list_files("captures")
+        except Exception as e:
+            logger.warning("Error listing captures: %s", e)
+            return []
+
+        captures: list[dict] = []
+        for path in files:
+            try:
+                content = adapter.read_file(path)
+                post = frontmatter.loads(content)
+                file_status = post.metadata.get("status", "capture")
+
+                if status != "all" and file_status != status:
+                    continue
+
+                captures.append({
+                    "path": path,
+                    "title": post.metadata.get("title", ""),
+                    "status": file_status,
+                    "created": post.metadata.get("created", ""),
+                    "tags": post.metadata.get("tags", []),
+                    "preview": post.content[:200],
+                })
+            except Exception:
+                continue
+
+        # Sort by filename descending (filenames are timestamped)
+        captures.sort(key=lambda c: c["path"], reverse=True)
+        return captures[:limit]

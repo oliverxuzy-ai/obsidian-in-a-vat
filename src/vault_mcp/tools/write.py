@@ -6,6 +6,7 @@ import frontmatter
 import yaml
 
 from vault_mcp.adapters.base import StorageAdapter
+from vault_mcp.utils.markdown import auto_insert_wikilinks, collect_note_titles
 
 logger = logging.getLogger("vault-mcp.tools.write")
 
@@ -189,4 +190,124 @@ def register_write_tools(mcp, adapter: StorageAdapter) -> None:
             "title": title,
             "tags": all_tags,
             "related_captures": related[:5],
+        }
+
+    @mcp.tool(
+        annotations={"destructiveHint": False, "idempotentHint": False}
+    )
+    def vault_promote(
+        capture_paths: list[str],
+        title: str,
+        summary: str,
+        domain: str,
+        content: str,
+        tags: list[str] | None = None,
+        aliases: list[str] | None = None,
+        confidence: float = 0.7,
+        auto_link: bool = True,
+    ) -> dict:
+        """Promote one or more captures into a structured note.
+
+        Claude should read the captures first, synthesize them, then call this
+        tool with structured output. The tool handles file creation, frontmatter,
+        auto-wikilink insertion, and marking source captures as promoted.
+
+        Args:
+            capture_paths: List of capture file paths to promote
+            title: Human-readable title for the new note
+            summary: One-sentence summary of the core idea
+            domain: Knowledge domain (e.g. "ai", "productivity", "psychology")
+            content: Synthesized note body in markdown (the Notes section)
+            tags: Tags for the note (if None, inherits union of capture tags)
+            aliases: Alternative names for the note
+            confidence: Confidence level 0.0-1.0 (default 0.7)
+            auto_link: Whether to auto-insert wikilinks to existing notes
+        """
+        # 1. Validate capture paths exist and are not already promoted
+        capture_posts: list[tuple[str, frontmatter.Post]] = []
+        for path in capture_paths:
+            try:
+                raw = adapter.read_file(path)
+            except FileNotFoundError:
+                return {"status": "error", "message": f"Capture not found: {path}"}
+            post = frontmatter.loads(raw)
+            if post.metadata.get("status") == "promoted":
+                return {
+                    "status": "error",
+                    "message": f"Already promoted: {path}",
+                }
+            capture_posts.append((path, post))
+
+        # 2. Collect tags from captures if none provided
+        if tags is None:
+            merged_tags: set[str] = set()
+            for _, post in capture_posts:
+                file_tags = post.metadata.get("tags", [])
+                if isinstance(file_tags, list):
+                    merged_tags.update(str(t).lower() for t in file_tags)
+            tags = sorted(merged_tags)
+
+        # 3. Generate slug and handle filename collision
+        slug = _generate_slug(title)
+        filename = f"notes/{slug}.md"
+        counter = 2
+        while True:
+            try:
+                adapter.read_file(filename)
+                # File exists, try next suffix
+                filename = f"notes/{slug}-{counter}.md"
+                counter += 1
+            except FileNotFoundError:
+                break
+
+        # 4. Build note body
+        body = (
+            f"# Summary\n\n"
+            f"{summary}\n\n"
+            f"# Notes\n\n"
+            f"{content}\n\n"
+            f"# Links\n\n"
+        )
+
+        # 5. Auto-insert wikilinks to existing notes
+        wikilinks_inserted: list[str] = []
+        if auto_link:
+            title_map = collect_note_titles(adapter)
+            body, wikilinks_inserted = auto_insert_wikilinks(
+                body, title_map, exclude_titles=[title.lower()]
+            )
+
+        # 6. Write the note file
+        now = datetime.now(timezone.utc)
+        iso_now = now.isoformat()
+        metadata = {
+            "title": title,
+            "status": "note",
+            "created": iso_now,
+            "updated": iso_now,
+            "domain": domain,
+            "confidence": confidence,
+            "tags": tags,
+            "aliases": aliases or [],
+            "promoted_from": capture_paths,
+        }
+        note_post = frontmatter.Post(body, **metadata)
+        adapter.write_file(filename, frontmatter.dumps(note_post))
+
+        # 7. Mark source captures as promoted
+        for path, post in capture_posts:
+            post.metadata["status"] = "promoted"
+            post.metadata["promoted_to"] = filename
+            post.metadata["updated"] = iso_now
+            adapter.write_file(path, frontmatter.dumps(post))
+
+        # 8. Return result
+        return {
+            "status": "success",
+            "path": filename,
+            "title": title,
+            "domain": domain,
+            "tags": tags,
+            "promoted_from": capture_paths,
+            "wikilinks_inserted": wikilinks_inserted,
         }
