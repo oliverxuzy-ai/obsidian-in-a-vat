@@ -3,16 +3,16 @@ title: "{{title}}"
 status: capture
 created: "{{created}}"
 updated: "{{updated}}"
-source: claude-chat
+source: "{{source_type}}"
 tags: []
 aliases: []
 ---
 
-## Capture
+{{insight}}
 
-{{content}}
+---
 
-## Next
+Source: {{source_type}}
 
-- Why does this matter?
-- What should this connect to later?
+Original:
+{{original}}
