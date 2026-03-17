@@ -1,0 +1,51 @@
+# Tag synonyms for auto-tag extraction
+ai:
+  - artificial intelligence
+  - machine learning
+  - deep learning
+  - neural network
+llm:
+  - large language model
+  - GPT
+  - Claude
+  - language model
+learning:
+  - spaced repetition
+  - active recall
+  - memorization
+  - study
+productivity:
+  - workflow
+  - efficiency
+  - time management
+  - automation
+pkm:
+  - personal knowledge management
+  - second brain
+  - note-taking
+  - zettelkasten
+programming:
+  - coding
+  - software engineering
+  - development
+  - code
+health:
+  - exercise
+  - sleep
+  - focus
+  - wellness
+writing:
+  - drafting
+  - editing
+  - prose
+  - composition
+finance:
+  - investing
+  - budgeting
+  - side project
+  - revenue
+prompt-engineering:
+  - prompt design
+  - few-shot
+  - chain of thought
+  - system prompt
