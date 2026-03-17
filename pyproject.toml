@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "vault-mcp"
-version = "0.2.4"
+version = "0.2.5"
 description = "Personal knowledge vault MCP server for Claude Desktop"
 requires-python = ">=3.10"
 dependencies = [
