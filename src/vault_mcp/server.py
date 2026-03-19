@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 
 from vault_mcp.adapters.local import LocalStorageAdapter
+from vault_mcp.tools.graph import register_graph_tools
 from vault_mcp.tools.read import register_read_tools
 from vault_mcp.tools.write import register_write_tools
 
@@ -36,6 +37,7 @@ adapter = _get_adapter()
 
 register_write_tools(mcp, adapter)
 register_read_tools(mcp, adapter)
+register_graph_tools(mcp, adapter)
 
 
 def main() -> None:

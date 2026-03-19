@@ -13,6 +13,8 @@ dependencies = [
     "pydantic>=2.0",
     "python-dotenv",
     "pyyaml",
+    "networkx>=3.0",
+    "python-louvain>=0.16",
 ]
 
 [project.scripts]
@@ -20,3 +22,8 @@ vault-mcp = "vault_mcp.server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/vault_mcp"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

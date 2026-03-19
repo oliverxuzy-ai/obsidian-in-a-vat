@@ -73,6 +73,59 @@ def make_capture(title: str, insight: str, tags: list[str] | None = None, status
     return frontmatter.dumps(post)
 
 
+def make_note(
+    title: str,
+    summary: str,
+    content: str = "",
+    tags: list[str] | None = None,
+    domain: str = "",
+    aliases: list[str] | None = None,
+    promoted_from: list[str] | None = None,
+    topics: list[str] | None = None,
+) -> str:
+    """Build a note markdown string with frontmatter."""
+    metadata = {
+        "title": title,
+        "status": "note",
+        "created": "2026-01-01T00:00:00+00:00",
+        "updated": "2026-01-01T00:00:00+00:00",
+        "domain": domain,
+        "confidence": 0.7,
+        "tags": tags or [],
+        "aliases": aliases or [],
+        "promoted_from": promoted_from or [],
+    }
+    if topics is not None:
+        metadata["topics"] = topics
+    body = f"# Summary\n\n{summary}\n\n# Notes\n\n{content or summary}\n\n# Links\n\n"
+    post = frontmatter.Post(body, **metadata)
+    return frontmatter.dumps(post)
+
+
+def make_topic(
+    title: str,
+    content: str,
+    member_notes: list[str] | None = None,
+    tags: list[str] | None = None,
+    domain: str = "",
+    graph_generation: int = 0,
+) -> str:
+    """Build a topic markdown string with frontmatter."""
+    metadata = {
+        "title": title,
+        "status": "topic",
+        "created": "2026-01-01T00:00:00+00:00",
+        "updated": "2026-01-01T00:00:00+00:00",
+        "domain": domain,
+        "tags": tags or [],
+        "aliases": [],
+        "member_notes": member_notes or [],
+        "graph_generation": graph_generation,
+    }
+    post = frontmatter.Post(content, **metadata)
+    return frontmatter.dumps(post)
+
+
 @pytest.fixture
 def adapter():
     return MemoryAdapter()

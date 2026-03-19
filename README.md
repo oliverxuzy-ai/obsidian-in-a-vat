@@ -84,13 +84,13 @@ Claude Desktop config:
 
 ### Tools
 
-| Tool | Description |
-|------|-------------|
-| `vault_capture` | Capture a refined insight — Claude distills your thought, confirms with you, then stores it with auto-tagging |
-| `vault_promote` | Promote one or more captures into a structured note with auto-wikilink insertion |
-| `vault_search` | Search the vault by text query, subdirectory, or frontmatter tags |
-| `vault_read` | Read the full markdown content of a vault note |
-| `vault_list_captures` | List captures filtered by status (`capture` / `promoted` / `all`), sorted newest first |
+| Tool | Actions | Description |
+|------|---------|-------------|
+| `vault_read` | `search`, `get`, `list_captures` | Search vault, read files, list captures by status |
+| `vault_capture` | `save`, `delete` | Capture refined insights with auto-tagging, or delete captures |
+| `vault_promote` | `promote` | Promote captures into structured notes with auto-wikilinks |
+| `vault_analyze` | `rebuild_graph`, `clusters`, `connections`, `orphans` | Knowledge graph: build graph, Louvain clustering, N-degree connections, orphan detection |
+| `vault_topic` | `prepare`, `create`, `update` | Topic lifecycle: gather materials (progressive disclosure), create/update MOC-style topics |
 
 ---
 
@@ -211,13 +211,13 @@ Claude Desktop 配置：
 
 ### 工具
 
-| 工具 | 说明 |
-|------|------|
-| `vault_capture` | 捕获精炼洞察 — Claude 提炼你的想法，经确认后存储并自动打标签 |
-| `vault_promote` | 将一个或多个 capture 提升为结构化笔记，自动插入 wikilinks |
-| `vault_search` | 按文本、子目录或 frontmatter 标签搜索 vault |
-| `vault_read` | 读取 vault 笔记的完整 markdown 内容 |
-| `vault_list_captures` | 按状态筛选 captures（`capture` / `promoted` / `all`），按时间倒序排列 |
+| 工具 | Actions | 说明 |
+|------|---------|------|
+| `vault_read` | `search`, `get`, `list_captures` | 搜索 vault、读取文件、按状态列出 captures |
+| `vault_capture` | `save`, `delete` | 捕获精炼洞察并自动打标签，或删除 capture |
+| `vault_promote` | `promote` | 将 captures 提升为结构化笔记，自动插入 wikilinks |
+| `vault_analyze` | `rebuild_graph`, `clusters`, `connections`, `orphans` | 知识图谱：构建图谱、Louvain 聚类、N 度关联查询、孤岛检测 |
+| `vault_topic` | `prepare`, `create`, `update` | Topic 生命周期：收集原材料（渐进式披露）、创建/更新 MOC 结构笔记 |
 
 ---
 
