@@ -356,7 +356,7 @@ def _handle_create(
         content, title_map, exclude_titles=[title.lower()]
     )
 
-    # Build topic file
+    # Build topic file (graph_generation placeholder, updated after incremental_update)
     metadata = {
         "title": title,
         "status": "topic",
@@ -366,7 +366,7 @@ def _handle_create(
         "tags": tags or [],
         "aliases": aliases or [],
         "member_notes": members,
-        "graph_generation": vault_graph.generation,
+        "graph_generation": 0,
     }
     post = frontmatter.Post(body, **metadata)
     adapter.write_file(filename, frontmatter.dumps(post))
@@ -374,8 +374,10 @@ def _handle_create(
     # Update reverse references on member notes
     _update_reverse_references(adapter, members, filename, add=True)
 
-    # Trigger incremental graph update
+    # Trigger incremental graph update, then stamp the resulting generation
     vault_graph.incremental_update()
+    post.metadata["graph_generation"] = vault_graph.generation
+    adapter.write_file(filename, frontmatter.dumps(post))
 
     return {
         "status": "success",
@@ -433,12 +435,13 @@ def _handle_update(
         post.metadata["tags"] = tags
 
     post.metadata["updated"] = iso_now
-    post.metadata["graph_generation"] = vault_graph.generation
 
     adapter.write_file(topic_path, frontmatter.dumps(post))
 
-    # Trigger incremental graph update
+    # Trigger incremental graph update, then stamp the resulting generation
     vault_graph.incremental_update()
+    post.metadata["graph_generation"] = vault_graph.generation
+    adapter.write_file(topic_path, frontmatter.dumps(post))
 
     return {
         "status": "success",
