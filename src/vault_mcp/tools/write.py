@@ -250,11 +250,6 @@ def _handle_promote(
             except FileNotFoundError:
                 return {"status": "error", "message": f"Capture not found: {path}"}
             post = frontmatter.loads(raw)
-            if post.metadata.get("status") == "promoted":
-                return {
-                    "status": "error",
-                    "message": f"Already promoted: {path}",
-                }
             capture_posts.append((path, post))
 
         # 2. Collect tags from captures if none provided
@@ -319,10 +314,14 @@ def _handle_promote(
             if alias_str:
                 title_cache[alias_str.lower()] = title
 
-        # 7. Mark source captures as promoted
+        # 7. Track promotion history on source captures
         for path, post in capture_posts:
-            post.metadata["status"] = "promoted"
-            post.metadata["promoted_to"] = filename
+            existing = post.metadata.get("promoted_to") or []
+            if isinstance(existing, str):
+                existing = [existing]
+            if filename not in existing:
+                existing.append(filename)
+            post.metadata["promoted_to"] = existing
             post.metadata["updated"] = iso_now
             adapter.write_file(path, frontmatter.dumps(post))
 

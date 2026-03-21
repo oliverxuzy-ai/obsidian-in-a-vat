@@ -2,6 +2,7 @@
 .env
 .venv/
 __pycache__/
+dist/
 .obsidian/
 .claude/settings.local.json
 design_doc/

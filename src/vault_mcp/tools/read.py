@@ -61,15 +61,15 @@ def _handle_list_captures(adapter: StorageAdapter, status, limit, include_conten
         try:
             content = adapter.read_file(file_path)
             post = frontmatter.loads(content)
-            file_status = post.metadata.get("status", "capture")
+            is_promoted = bool(post.metadata.get("promoted_to"))
 
-            if status != "all" and file_status != status:
+            if status != "all" and is_promoted != (status == "promoted"):
                 continue
 
             entry: dict = {
                 "path": file_path,
                 "title": post.metadata.get("title", ""),
-                "status": file_status,
+                "status": "promoted" if is_promoted else "capture",
                 "created": post.metadata.get("created", ""),
                 "tags": post.metadata.get("tags", []),
             }

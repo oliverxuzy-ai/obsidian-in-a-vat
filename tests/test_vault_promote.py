@@ -91,8 +91,8 @@ class TestPromoteHappyPath:
 
         for cap_path in ["captures/cap1.md", "captures/cap2.md"]:
             post = frontmatter.loads(adapter.read_file(cap_path))
-            assert post.metadata["status"] == "promoted"
-            assert post.metadata["promoted_to"] == result["path"]
+            assert post.metadata["status"] == "capture"
+            assert post.metadata["promoted_to"] == [result["path"]]
 
 
 # ---------------------------------------------------------------------------
@@ -226,22 +226,60 @@ class TestErrorCases:
         assert result["status"] == "error"
         assert "not found" in result["message"].lower()
 
-    def test_already_promoted(self):
-        """Error returned when a capture has already been promoted."""
-        cap = make_capture("C", "B.", tags=[], status="promoted")
+    def test_repromote_succeeds(self):
+        """A previously promoted capture can be promoted again."""
+        cap = make_capture("C", "B.", tags=[])
         adapter, promote = setup_promote({"captures/c.md": cap})
 
-        result = promote(
+        # First promote
+        result1 = promote(
             action="promote",
             capture_paths=["captures/c.md"],
-            title="T",
+            title="First Note",
             summary="S.",
             domain="d",
             content="C.",
         )
+        assert result1["status"] == "success"
 
-        assert result["status"] == "error"
-        assert "already promoted" in result["message"].lower()
+        # Second promote of the same capture
+        result2 = promote(
+            action="promote",
+            capture_paths=["captures/c.md"],
+            title="Second Note",
+            summary="S2.",
+            domain="d2",
+            content="C2.",
+        )
+        assert result2["status"] == "success"
+
+        # promoted_to should contain both note paths
+        post = frontmatter.loads(adapter.read_file("captures/c.md"))
+        assert post.metadata["status"] == "capture"
+        assert post.metadata["promoted_to"] == [result1["path"], result2["path"]]
+
+    def test_repromote_backward_compat(self):
+        """Old string-style promoted_to is migrated to list on re-promote."""
+        cap = make_capture("C", "B.", tags=[])
+        adapter, promote = setup_promote({"captures/c.md": cap})
+
+        # Simulate old-style string promoted_to
+        post = frontmatter.loads(adapter.read_file("captures/c.md"))
+        post.metadata["promoted_to"] = "notes/old-note.md"
+        adapter.write_file("captures/c.md", frontmatter.dumps(post))
+
+        result = promote(
+            action="promote",
+            capture_paths=["captures/c.md"],
+            title="New Note",
+            summary="S.",
+            domain="d",
+            content="C.",
+        )
+        assert result["status"] == "success"
+
+        post = frontmatter.loads(adapter.read_file("captures/c.md"))
+        assert post.metadata["promoted_to"] == ["notes/old-note.md", result["path"]]
 
     def test_second_capture_missing(self):
         """Error returned for second capture when first is valid."""
