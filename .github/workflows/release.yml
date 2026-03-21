@@ -76,3 +76,30 @@ jobs:
           gh release create "v${{ steps.version.outputs.new }}" \
             --title "v${{ steps.version.outputs.new }}" \
             --generate-notes
+
+  pypi-publish:
+    needs: release
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write  # Required for trusted publishing
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main  # Get the commit with updated version
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install --no-cache-dir build
+
+      - name: Build package
+        run: python -m build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
