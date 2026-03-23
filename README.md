@@ -2,6 +2,12 @@
 
 [English](#english) | [中文](#中文)
 
+### Demo
+
+<video src="assets/demo.mp4" controls width="100%">
+  Your browser does not support the video tag.
+</video>
+
 ---
 
 <a id="english"></a>
