@@ -46,10 +46,9 @@ Replace `/Users/yourname/my-vault` with the absolute path to your local vault di
 
 **Step 3.** Fully quit and reopen Claude Desktop. The `vault` tools will appear automatically.
 
-> **Don't have a vault yet?** Copy the included template:
-> ```bash
-> cp -r example_vault /Users/yourname/my-vault
-> ```
+> **Don't have a vault yet?** Just point `VAULT_LOCAL_PATH` to an empty directory. On first use, ask Claude to _"initialize my vault"_ — it will set up the full directory structure automatically.
+>
+> **Already have an Obsidian vault?** Point `VAULT_LOCAL_PATH` to your existing vault and ask Claude to _"initialize my vault"_. It will scan your notes, classify them (captures vs. notes), and migrate everything into the vault-mcp format. Originals are safely archived under `_archive/`.
 
 ---
 
@@ -111,6 +110,7 @@ Claude Desktop config:
 
 | Tool | Actions | Description |
 |------|---------|-------------|
+| `vault_init` | `setup`, `migrate` | One-click vault initialization: seed empty vaults from template, or migrate existing Obsidian notes with server-side classification, todo conversion, and auto-archiving |
 | `vault_read` | `search`, `get`, `list_captures` | Search vault, read files, list captures by status |
 | `vault_capture` | `save`, `delete` | Capture refined insights with auto-tagging, or delete captures |
 | `vault_promote` | `promote` | Promote captures into structured notes with auto-wikilinks |
@@ -194,10 +194,9 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 **第三步.** 完全退出并重新打开 Claude Desktop，`vault` 工具会自动出现。
 
-> **还没有 vault？** 复制内置模板：
-> ```bash
-> cp -r example_vault /Users/yourname/my-vault
-> ```
+> **还没有 vault？** 将 `VAULT_LOCAL_PATH` 指向一个空目录即可。首次使用时让 Claude _"初始化我的 vault"_ — 它会自动创建完整的目录结构。
+>
+> **已有 Obsidian vault？** 将 `VAULT_LOCAL_PATH` 指向你现有的 vault 目录，让 Claude _"初始化我的 vault"_。它会扫描你的笔记，自动分类（capture vs. note），并批量迁移为 vault-mcp 格式。原始文件安全归档到 `_archive/`。
 
 ---
 
@@ -259,6 +258,7 @@ Claude Desktop 配置：
 
 | 工具 | Actions | 说明 |
 |------|---------|------|
+| `vault_init` | `setup`, `migrate` | 一键初始化：空 vault 自动创建模板结构；已有 Obsidian vault 自动扫描分类、todo 转换、批量迁移，原始文件归档到 `_archive/` |
 | `vault_read` | `search`, `get`, `list_captures` | 搜索 vault、读取文件、按状态列出 captures |
 | `vault_capture` | `save`, `delete` | 捕获精炼洞察并自动打标签，或删除 capture |
 | `vault_promote` | `promote` | 将 captures 提升为结构化笔记，自动插入 wikilinks |
