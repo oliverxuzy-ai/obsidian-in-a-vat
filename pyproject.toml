@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "obsidian-in-a-vat-mcp"
-version = "0.3.7"
+version = "0.3.8"
 description = "Personal knowledge vault MCP server for Claude Desktop"
 readme = "README.md"
 license = "MIT"
