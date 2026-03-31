@@ -113,6 +113,7 @@ To run from a local checkout (changes take effect after restarting Claude Deskto
 | `vault_capture` | `save`, `delete` | Capture refined insights with auto-tagging, or delete captures |
 | `vault_promote` | `promote` | Promote captures into structured notes with auto-wikilinks |
 | `vault_analyze` | `rebuild_graph`, `clusters`, `connections`, `orphans` | Knowledge graph: build graph, Louvain clustering, N-degree connections, orphan detection |
+| `vault_reflect` | `snapshot`, `drift`, `blindspots` | Cognitive visualization: knowledge landscape snapshot, interest drift over time, blind spot and bridge detection |
 | `vault_topic` | `prepare`, `create`, `update` | Topic lifecycle: gather materials (progressive disclosure), create/update MOC-style topics |
 
 ---
@@ -259,6 +260,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 | `vault_capture` | `save`, `delete` | 捕获精炼洞察并自动打标签，或删除 capture |
 | `vault_promote` | `promote` | 将 captures 提升为结构化笔记，自动插入 wikilinks |
 | `vault_analyze` | `rebuild_graph`, `clusters`, `connections`, `orphans` | 知识图谱：构建图谱、Louvain 聚类、N 度关联查询、孤岛检测 |
+| `vault_reflect` | `snapshot`, `drift`, `blindspots` | 认知可视化：知识全景快照、兴趣漂移分析、盲区与桥接发现 |
 | `vault_topic` | `prepare`, `create`, `update` | Topic 生命周期：收集原材料（渐进式披露）、创建/更新 MOC 结构笔记 |
 
 ---
