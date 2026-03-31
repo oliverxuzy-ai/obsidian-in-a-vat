@@ -4,6 +4,14 @@ from abc import ABC, abstractmethod
 class StorageAdapter(ABC):
     """Abstract interface for vault storage backends."""
 
+    def __init__(self) -> None:
+        self._write_generation: int = 0
+
+    @property
+    def write_generation(self) -> int:
+        """Monotonic counter incremented on every write/delete."""
+        return self._write_generation
+
     @abstractmethod
     def read_file(self, path: str) -> str:
         """Read file content. Path is relative to vault root."""
@@ -18,8 +26,8 @@ class StorageAdapter(ABC):
         ...
 
     @abstractmethod
-    def list_files(self, directory: str = "") -> list[str]:
-        """List all .md files recursively under directory.
+    def list_files(self, directory: str = "", extension: str = ".md") -> list[str]:
+        """List files recursively under directory filtered by extension.
 
         Returns relative paths as strings.
         """

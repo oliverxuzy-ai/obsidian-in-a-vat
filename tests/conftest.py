@@ -12,6 +12,7 @@ class MemoryAdapter(StorageAdapter):
     """In-memory storage adapter for testing."""
 
     def __init__(self, files: dict[str, str] | None = None):
+        super().__init__()
         self.files: dict[str, str] = dict(files or {})
 
     def read_file(self, path: str) -> str:
@@ -21,17 +22,19 @@ class MemoryAdapter(StorageAdapter):
 
     def write_file(self, path: str, content: str) -> dict:
         self.files[path] = content
+        self._write_generation += 1
         return {"path": path, "status": "written"}
 
     def delete_file(self, path: str) -> dict:
         if path not in self.files:
             raise FileNotFoundError(f"File not found: {path}")
         del self.files[path]
+        self._write_generation += 1
         return {"path": path, "status": "deleted"}
 
-    def list_files(self, directory: str = "") -> list[str]:
+    def list_files(self, directory: str = "", extension: str = ".md") -> list[str]:
         return sorted(
-            p for p in self.files if p.endswith(".md") and p.startswith(directory)
+            p for p in self.files if p.endswith(extension) and p.startswith(directory)
         )
 
     def search_files(self, query: str, directory: str = "") -> list[dict]:
@@ -58,13 +61,19 @@ class McpStub:
         return decorator
 
 
-def make_capture(title: str, insight: str, tags: list[str] | None = None, status: str = "capture") -> str:
+def make_capture(
+    title: str,
+    insight: str,
+    tags: list[str] | None = None,
+    status: str = "capture",
+    created: str | None = None,
+) -> str:
     """Build a capture markdown string with frontmatter."""
     metadata = {
         "title": title,
         "status": status,
-        "created": "2026-01-01T00:00:00+00:00",
-        "updated": "2026-01-01T00:00:00+00:00",
+        "created": created or "2026-01-01T00:00:00+00:00",
+        "updated": created or "2026-01-01T00:00:00+00:00",
         "source": "conversation",
         "tags": tags or [],
         "aliases": [],
@@ -82,13 +91,14 @@ def make_note(
     aliases: list[str] | None = None,
     promoted_from: list[str] | None = None,
     topics: list[str] | None = None,
+    created: str | None = None,
 ) -> str:
     """Build a note markdown string with frontmatter."""
     metadata = {
         "title": title,
         "status": "note",
-        "created": "2026-01-01T00:00:00+00:00",
-        "updated": "2026-01-01T00:00:00+00:00",
+        "created": created or "2026-01-01T00:00:00+00:00",
+        "updated": created or "2026-01-01T00:00:00+00:00",
         "domain": domain,
         "confidence": 0.7,
         "tags": tags or [],

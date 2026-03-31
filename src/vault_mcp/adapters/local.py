@@ -10,6 +10,7 @@ class LocalStorageAdapter(StorageAdapter):
     """Storage adapter for the local filesystem."""
 
     def __init__(self, vault_path: str) -> None:
+        super().__init__()
         self.vault_path = Path(vault_path).resolve()
         self.vault_path.mkdir(parents=True, exist_ok=True)
         logger.info("Vault root: %s", self.vault_path)
@@ -37,6 +38,7 @@ class LocalStorageAdapter(StorageAdapter):
             full = self._resolve_safe(path)
             full.parent.mkdir(parents=True, exist_ok=True)
             full.write_text(content, encoding="utf-8")
+            self._write_generation += 1
             logger.info("Wrote file: %s", path)
             return {"path": path, "status": "written"}
         except ValueError:
@@ -48,6 +50,7 @@ class LocalStorageAdapter(StorageAdapter):
         try:
             full = self._resolve_safe(path)
             full.unlink()
+            self._write_generation += 1
             logger.info("Deleted file: %s", path)
             return {"path": path, "status": "deleted"}
         except FileNotFoundError:
@@ -57,13 +60,18 @@ class LocalStorageAdapter(StorageAdapter):
         except Exception as e:
             raise RuntimeError(f"Error deleting {path}: {e}") from e
 
-    def list_files(self, directory: str = "") -> list[str]:
+    def list_files(self, directory: str = "", extension: str = ".md") -> list[str]:
         try:
             base = self._resolve_safe(directory) if directory else self.vault_path
+            glob_pattern = f"*{extension}"
+            # Skip dot-directory filter when explicitly listing inside a dot-directory
+            skip_dot_filter = directory.startswith(".")
             return sorted(
                 str(p.relative_to(self.vault_path))
-                for p in base.rglob("*.md")
-                if not any(part.startswith(".") for part in p.relative_to(self.vault_path).parts)
+                for p in base.rglob(glob_pattern)
+                if skip_dot_filter or not any(
+                    part.startswith(".") for part in p.relative_to(self.vault_path).parts
+                )
             )
         except Exception as e:
             logger.error("Error listing files in %s: %s", directory, e)
